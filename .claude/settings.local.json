@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm ls *)",
+      "Bash(npx prisma *)",
+      "Bash(npm view *)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:4000/api/health)",
+      "Bash(curl -s -X POST http://localhost:4000/api/clients -H \"Content-Type: application/json\" -d '{\"name\":\"Acme Corp\",\"email\":\"billing@acme.com\",\"taxId\":\"30-12345678-9\",\"address\":\"Av. Siempre Viva 123\"}')",
+      "Bash(curl -s -X POST http://localhost:4000/api/invoices -H 'Content-Type: application/json' -d '{ *)",
+      "Bash(curl -s -o \"/c/Users/Fernando Neirot/Documents/repos/patagonia/claude/test-invoice.pdf\" http://localhost:4000/api/invoices/cmubwvacr0002558oiaft4blg/pdf)",
+      "Bash(npx create-next-app@latest web --typescript --tailwind --app --eslint --src-dir --import-alias \"@/*\" --use-npm --no-turbopack)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/clients)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/invoices/new)",
+      "Bash(curl -s http://localhost:3000/invoices/cmubwvacr0002558oiaft4blg)",
+      "Bash(npx --yes playwright --version)",
+      "Bash(npx --yes playwright install chromium)",
+      "Bash(mv server *)",
+      "Bash(mv .nest-scaffold server)",
+      "Bash(cp -r server-express-backup/prisma server/prisma)",
+      "Bash(cp server-express-backup/.env server/.env)",
+      "Bash(cp server-express-backup/prisma.config.ts server/prisma.config.ts)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:4000/api/health)"
+    ]
+  }
+}
