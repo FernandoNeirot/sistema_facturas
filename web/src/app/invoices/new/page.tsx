@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, type Client } from "@/lib/api";
+import { cardClass, inputClass, itemInputClass, labelClass } from "@/lib/ui";
 
 type LineItem = { description: string; quantity: string; unitPrice: string };
 
@@ -66,7 +67,7 @@ export default function NewInvoicePage() {
 
   if (clients.length === 0) {
     return (
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-gray-500 dark:text-gray-400">
         Primero necesitás crear un cliente en la sección{" "}
         <a href="/clients" className="underline">
           Clientes
@@ -79,15 +80,11 @@ export default function NewInvoicePage() {
   return (
     <div>
       <h1 className="mb-6 text-2xl font-semibold">Nueva factura</h1>
-      <form onSubmit={handleSubmit} className="space-y-6 rounded-md border border-gray-200 bg-white p-6">
+      <form onSubmit={handleSubmit} className={`space-y-6 p-6 ${cardClass}`}>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Cliente *</label>
-            <select
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-              value={clientId}
-              onChange={(e) => setClientId(e.target.value)}
-            >
+            <label className={labelClass}>Cliente *</label>
+            <select className={inputClass} value={clientId} onChange={(e) => setClientId(e.target.value)}>
               {clients.map((client) => (
                 <option key={client.id} value={client.id}>
                   {client.name}
@@ -96,10 +93,10 @@ export default function NewInvoicePage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Fecha de vencimiento *</label>
+            <label className={labelClass}>Fecha de vencimiento *</label>
             <input
               type="date"
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className={inputClass}
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
               required
@@ -109,11 +106,11 @@ export default function NewInvoicePage() {
 
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <label className="block text-sm font-medium text-gray-700">Ítems</label>
+            <label className={labelClass}>Ítems</label>
             <button
               type="button"
               onClick={() => setItems((prev) => [...prev, emptyItem])}
-              className="text-sm text-gray-900 underline"
+              className="text-sm text-gray-900 underline dark:text-gray-100"
             >
               + Agregar ítem
             </button>
@@ -123,7 +120,7 @@ export default function NewInvoicePage() {
               <div key={index} className="grid grid-cols-[1fr_80px_100px_28px] items-center gap-2">
                 <input
                   placeholder="Descripción"
-                  className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+                  className={itemInputClass}
                   value={item.description}
                   onChange={(e) => updateItem(index, { description: e.target.value })}
                 />
@@ -132,7 +129,7 @@ export default function NewInvoicePage() {
                   min="0"
                   step="any"
                   placeholder="Cant."
-                  className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+                  className={itemInputClass}
                   value={item.quantity}
                   onChange={(e) => updateItem(index, { quantity: e.target.value })}
                 />
@@ -141,7 +138,7 @@ export default function NewInvoicePage() {
                   min="0"
                   step="any"
                   placeholder="Precio"
-                  className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+                  className={itemInputClass}
                   value={item.unitPrice}
                   onChange={(e) => updateItem(index, { unitPrice: e.target.value })}
                 />
@@ -149,7 +146,7 @@ export default function NewInvoicePage() {
                   type="button"
                   onClick={() => removeItem(index)}
                   disabled={items.length === 1}
-                  className="text-gray-400 hover:text-red-600 disabled:opacity-30"
+                  className="text-gray-400 hover:text-red-600 disabled:opacity-30 dark:text-gray-500 dark:hover:text-red-400"
                   aria-label="Quitar ítem"
                 >
                   ✕
@@ -160,29 +157,24 @@ export default function NewInvoicePage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Notas</label>
-          <textarea
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            rows={3}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
+          <label className={labelClass}>Notas</label>
+          <textarea className={inputClass} rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
 
-        <div className="flex items-center justify-between border-t border-gray-200 pt-4">
+        <div className="flex items-center justify-between border-t border-gray-200 pt-4 dark:border-gray-800">
           <p className="text-lg font-semibold">
             Total: {new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(total)}
           </p>
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+            className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
           >
             {submitting ? "Creando..." : "Crear factura"}
           </button>
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </form>
     </div>
   );
