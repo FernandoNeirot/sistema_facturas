@@ -1,0 +1,1 @@
+antes de levantar los proyectos, correr lint, ejecutar al menos 3 test, corre el build, para verificar que el proyecto este todo bien. luego de eso, levantame los 2 proyectos
