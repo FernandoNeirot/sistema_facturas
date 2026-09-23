@@ -1,30 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { api, type Invoice, type InvoiceStatus } from "@/lib/api";
-import { cardClass } from "@/lib/ui";
+import { api } from "@/lib/api";
+import { useInvoiceQuery, useUpdateInvoiceStatusMutation } from "@/hooks/use-invoices";
+import { InvoiceStatusSchema, type InvoiceStatus } from "@/schemas/invoice.schema";
+import { inputClass } from "@/lib/ui";
+import { currency, dateFormatter } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
-const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
-const dateFormatter = new Intl.DateTimeFormat("es-AR", { timeZone: "UTC" });
-const statuses: InvoiceStatus[] = ["DRAFT", "SENT", "PAID", "OVERDUE"];
+const statuses = InvoiceStatusSchema.options;
 
 export default function InvoiceDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const [invoice, setInvoice] = useState<Invoice | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { data: invoice, isError, error } = useInvoiceQuery(id);
+  const updateStatus = useUpdateInvoiceStatusMutation(id);
 
-  useEffect(() => {
-    api.invoices.get(id).then(setInvoice).catch((err) => setError(err.message));
-  }, [id]);
-
-  async function handleStatusChange(status: InvoiceStatus) {
-    if (!invoice) return;
-    const updated = await api.invoices.updateStatus(invoice.id, status);
-    setInvoice(updated);
+  function handleStatusChange(status: InvoiceStatus) {
+    updateStatus.mutate(status);
   }
 
-  if (error) return <p className="text-sm text-red-600 dark:text-red-400">{error}</p>;
+  if (isError) {
+    return (
+      <p className="text-sm text-red-600 dark:text-red-400">
+        {error instanceof Error ? error.message : "Error desconocido"}
+      </p>
+    );
+  }
   if (!invoice) return <p className="text-sm text-gray-500 dark:text-gray-400">Cargando...</p>;
 
   return (
@@ -36,7 +38,7 @@ export default function InvoiceDetailPage() {
         </div>
         <div className="flex items-center gap-3">
           <select
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            className={inputClass}
             value={invoice.status}
             onChange={(e) => handleStatusChange(e.target.value as InvoiceStatus)}
           >
@@ -46,17 +48,14 @@ export default function InvoiceDetailPage() {
               </option>
             ))}
           </select>
-          <a
-            href={api.invoices.pdfUrl(invoice.id)}
-            className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
-          >
+          <Button href={api.invoices.pdfUrl(invoice.id)} className="px-4 py-2">
             Descargar PDF
-          </a>
+          </Button>
         </div>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">
-        <div className={`p-4 ${cardClass}`}>
+        <Card className="p-4">
           <h2 className="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Cliente</h2>
           <p className="font-medium">{invoice.client.name}</p>
           {invoice.client.email && (
@@ -68,8 +67,8 @@ export default function InvoiceDetailPage() {
           {invoice.client.address && (
             <p className="text-sm text-gray-600 dark:text-gray-400">{invoice.client.address}</p>
           )}
-        </div>
-        <div className={`p-4 ${cardClass}`}>
+        </Card>
+        <Card className="p-4">
           <h2 className="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Fechas</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Emisión: {dateFormatter.format(new Date(invoice.issueDate))}
@@ -77,10 +76,10 @@ export default function InvoiceDetailPage() {
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Vencimiento: {dateFormatter.format(new Date(invoice.dueDate))}
           </p>
-        </div>
+        </Card>
       </div>
 
-      <div className={`overflow-hidden ${cardClass}`}>
+      <Card className="overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
           <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-gray-800/60 dark:text-gray-400">
             <tr>
@@ -109,13 +108,13 @@ export default function InvoiceDetailPage() {
             </tr>
           </tfoot>
         </table>
-      </div>
+      </Card>
 
       {invoice.notes && (
-        <div className={`p-4 ${cardClass}`}>
+        <Card className="p-4">
           <h2 className="mb-1 text-sm font-semibold text-gray-500 dark:text-gray-400">Notas</h2>
           <p className="text-sm text-gray-700 dark:text-gray-300">{invoice.notes}</p>
-        </div>
+        </Card>
       )}
     </div>
   );

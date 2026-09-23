@@ -1,29 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { api, type Invoice, type InvoiceStatus } from "@/lib/api";
-
-const statusStyles: Record<InvoiceStatus, string> = {
-  DRAFT: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-  SENT: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
-  PAID: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
-  OVERDUE: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
-};
-
-const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
-const dateFormatter = new Intl.DateTimeFormat("es-AR", { timeZone: "UTC" });
+import { useInvoicesQuery } from "@/hooks/use-invoices";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { currency, dateFormatter } from "@/lib/format";
 
 export default function InvoicesPage() {
-  const [invoices, setInvoices] = useState<Invoice[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api.invoices
-      .list()
-      .then(setInvoices)
-      .catch((err) => setError(err.message));
-  }, []);
+  const { data: invoices, isLoading, isError, error } = useInvoicesQuery();
 
   return (
     <div>
@@ -31,13 +14,13 @@ export default function InvoicesPage() {
         <h1 className="text-2xl font-semibold">Facturas</h1>
       </div>
 
-      {error && (
+      {isError && (
         <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-400">
-          No se pudo conectar con el servidor: {error}
+          No se pudo conectar con el servidor: {error instanceof Error ? error.message : "Error desconocido"}
         </p>
       )}
 
-      {!error && !invoices && (
+      {!isError && isLoading && (
         <p className="text-sm text-gray-500 dark:text-gray-400">Cargando facturas...</p>
       )}
 
@@ -78,9 +61,7 @@ export default function InvoicesPage() {
                     {dateFormatter.format(new Date(invoice.dueDate))}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-1 text-xs font-medium ${statusStyles[invoice.status]}`}>
-                      {invoice.status}
-                    </span>
+                    <StatusBadge status={invoice.status} />
                   </td>
                   <td className="px-4 py-3 text-right font-medium">{currency.format(invoice.total)}</td>
                 </tr>

@@ -1,35 +1,9 @@
+import type { Client } from "@/schemas/client.schema";
+import type { Invoice, InvoiceStatus } from "@/schemas/invoice.schema";
+
+export type { Client, Invoice, InvoiceStatus };
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
-
-export type Client = {
-  id: string;
-  name: string;
-  email: string | null;
-  taxId: string | null;
-  address: string | null;
-  createdAt: string;
-};
-
-export type InvoiceStatus = "DRAFT" | "SENT" | "PAID" | "OVERDUE";
-
-export type InvoiceItem = {
-  id: string;
-  description: string;
-  quantity: number;
-  unitPrice: number;
-};
-
-export type Invoice = {
-  id: string;
-  number: string;
-  status: InvoiceStatus;
-  issueDate: string;
-  dueDate: string;
-  notes: string | null;
-  clientId: string;
-  client: Client;
-  items: InvoiceItem[];
-  total: number;
-};
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {

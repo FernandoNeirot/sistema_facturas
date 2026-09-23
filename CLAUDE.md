@@ -43,11 +43,21 @@ El frontend lee la URL de la API de `web/.env.local` (`NEXT_PUBLIC_API_URL`, def
 
 ## Frontend (`web/`)
 
-- App Router, sin capa de componentes reutilizables (todo el JSX/Tailwind vive inline en cada `page.tsx`) salvo `src/components/theme-provider.tsx` y `theme-toggle.tsx`.
-- Todas las páginas son `"use client"` con `useEffect` + fetch manual (`src/lib/api.ts`) — no se usan Server Components para data fetching ni Server Actions para mutaciones. Es una decisión pragmática, no la más idiomática de Next.
+- App Router. Todas las páginas siguen siendo `"use client"` (no se usan Server Components para data fetching ni Server Actions para mutaciones), pero el estado y la validación siguen el stack definido por el skill `react-rules`:
+  - **React Query** (`@tanstack/react-query`) para data fetching/cache/invalidación — capa de hooks en `src/hooks/` (`use-clients.ts`, `use-invoices.ts`), que llaman a `src/lib/api.ts` (fetch manual, sin cambios) como `queryFn`/`mutationFn`. `src/lib/query-client.ts` + `src/components/query-provider.tsx` proveen el `QueryClient` (montado en `layout.tsx`).
+  - **Zod** para esquemas/validación (`src/schemas/client.schema.ts`, `src/schemas/invoice.schema.ts`) — los tipos (`Client`, `Invoice`, `InvoiceStatus`, etc.) se infieren de estos esquemas (`z.infer`) en vez de declararse a mano; `lib/api.ts` los reexporta.
+  - **React Hook Form + Zod** (`@hookform/resolvers/zod`) en los formularios de `/clients` y `/invoices/new`. El de nueva factura usa `useFieldArray` para los ítems dinámicos y tipa `useForm` con `z.input`/`z.output` del schema porque `quantity`/`unitPrice` usan `z.coerce.number()`.
+  - **Zustand** (`src/store/ui-store.ts`) solo para el toast global de errores/éxitos de mutations (`src/components/toast.tsx`, montado en `layout.tsx`) — los errores de validación de campo siguen mostrándose inline vía `formState.errors` (`src/components/ui/error-text.tsx`), el store no los reemplaza.
+  - Componentes chicos reutilizables en `src/components/ui/` (`button.tsx`, `card.tsx`, `status-badge.tsx`, `error-text.tsx`) además de `theme-provider.tsx`/`theme-toggle.tsx`.
+  - Formatters de fecha/moneda centralizados en `src/lib/format.ts` (antes duplicados en cada página).
 - Rutas: `/` (listado de facturas), `/clients` (alta + listado), `/invoices/new` (alta de factura con ítems dinámicos), `/invoices/[id]` (detalle, cambio de estado, descarga de PDF).
 - **Tema claro/oscuro**: `next-themes` + Tailwind con `@custom-variant dark (&:where(.dark, .dark *))` en `globals.css` (modo oscuro por clase, no por `prefers-color-scheme`). Constantes de clases compartidas (`inputClass`, `labelClass`, `cardClass`, `itemInputClass`) en `src/lib/ui.ts` para no repetir los pares de clases claro/oscuro en cada input.
 - UI en **español** (textos, labels, mensajes de error) — mantener ese idioma en cambios nuevos salvo que se indique lo contrario.
+
+## Skills disponibles
+
+- **`explain-code`** — resume el codebase (tecnologías con versiones, funcionalidades, estructura de directorios, componentes principales, base de datos). Trigger: pedidos de explicar/resumir el proyecto.
+- **`react-rules`** — define el stack obligatorio para features de React/Next nuevas o modificadas: TypeScript, Zustand (estado global), Zod (validación de esquemas), React Hook Form + Zod (formularios), React Query o SWR (data fetching con cache), componentes chicos de una sola responsabilidad, sin lógica derivada en `useEffect`. Trigger: crear o modificar componentes, hooks, estado, formularios o lógica de UI en React/Next.
 
 ## Convenciones generales
 

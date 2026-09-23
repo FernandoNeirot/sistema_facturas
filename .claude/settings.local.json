@@ -26,7 +26,18 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:4000/api/health)",
       "Bash(node -e ' *)",
       "WebSearch",
-      "Bash(npm test *)"
+      "Bash(npm test *)",
+      "Bash(curl -s -o /dev/null -w \"backend health: %{http_code}\\\\n\" http://localhost:4000/api/health)",
+      "Bash(curl -s -o /dev/null -w \"frontend root: %{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(NODE_PATH=\"/c/Users/Fernando Neirot/Documents/repos/patagonia/claude/web/node_modules\" node smoke.mjs)",
+      "Bash(npm init *)",
+      "Bash(node smoke.mjs)",
+      "Bash(curl -s http://localhost:4000/api/clients)",
+      "Bash(curl -s http://localhost:4000/api/invoices)",
+      "Bash(curl -s -X DELETE http://localhost:4000/api/invoices/cmueq4b4i000255n03a2c5uae -o /dev/null -w \"delete invoice INV-00004: %{http_code}\\\\n\")",
+      "Bash(curl -s -X DELETE http://localhost:4000/api/invoices/cmueq3mnl000255qshzlg0hqd -o /dev/null -w \"delete invoice INV-00003: %{http_code}\\\\n\")",
+      "Bash(curl -s -X DELETE http://localhost:4000/api/clients/cmueq49l4000055n05qx5vsm6 -o /dev/null -w \"delete client iqxekx: %{http_code}\\\\n\")",
+      "Bash(curl -s -X DELETE http://localhost:4000/api/clients/cmueq3l3t000055qsnlj2wvat -o /dev/null -w \"delete client wupfrj: %{http_code}\\\\n\")"
     ]
   }
 }

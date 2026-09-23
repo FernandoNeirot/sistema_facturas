@@ -1,103 +1,76 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { api, type Client } from "@/lib/api";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useClientsQuery, useCreateClientMutation, useDeleteClientMutation } from "@/hooks/use-clients";
+import { CreateClientFormSchema, type CreateClientFormValues } from "@/schemas/client.schema";
 import { cardClass, inputClass, labelClass } from "@/lib/ui";
-
-const emptyForm = { name: "", email: "", taxId: "", address: "" };
+import { Button } from "@/components/ui/button";
+import { ErrorText } from "@/components/ui/error-text";
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Client[] | null>(null);
-  const [form, setForm] = useState(emptyForm);
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const { data: clients, isLoading } = useClientsQuery();
+  const createClient = useCreateClientMutation();
+  const deleteClient = useDeleteClientMutation();
 
-  const loadClients = () => api.clients.list().then(setClients).catch((err) => setError(err.message));
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<CreateClientFormValues>({
+    resolver: zodResolver(CreateClientFormSchema),
+    defaultValues: { name: "", email: "", taxId: "", address: "" },
+  });
 
-  useEffect(() => {
-    loadClients();
-  }, []);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.name.trim()) return;
-    setSubmitting(true);
-    setError(null);
-    try {
-      await api.clients.create({
-        name: form.name,
-        email: form.email || null,
-        taxId: form.taxId || null,
-        address: form.address || null,
-      });
-      setForm(emptyForm);
-      await loadClients();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error desconocido");
-    } finally {
-      setSubmitting(false);
-    }
+  function onSubmit(values: CreateClientFormValues) {
+    createClient.mutate(
+      {
+        name: values.name,
+        email: values.email || null,
+        taxId: values.taxId || null,
+        address: values.address || null,
+      },
+      { onSuccess: () => reset() },
+    );
   }
 
-  async function handleDelete(id: string) {
+  function handleDelete(id: string) {
     if (!confirm("¿Eliminar este cliente?")) return;
-    await api.clients.remove(id);
-    await loadClients();
+    deleteClient.mutate(id);
   }
 
   return (
     <div className="grid gap-8 md:grid-cols-[2fr_3fr]">
       <div>
         <h1 className="mb-4 text-2xl font-semibold">Nuevo cliente</h1>
-        <form onSubmit={handleSubmit} className={`space-y-4 p-6 ${cardClass}`}>
+        <form onSubmit={handleSubmit(onSubmit)} className={`space-y-4 p-6 ${cardClass}`}>
           <div>
             <label className={labelClass}>Nombre *</label>
-            <input
-              className={inputClass}
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              required
-            />
+            <input className={inputClass} {...register("name")} />
+            {errors.name && <ErrorText>{errors.name.message}</ErrorText>}
           </div>
           <div>
             <label className={labelClass}>Email</label>
-            <input
-              type="email"
-              className={inputClass}
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
+            <input type="email" className={inputClass} {...register("email")} />
           </div>
           <div>
             <label className={labelClass}>CUIT / Tax ID</label>
-            <input
-              className={inputClass}
-              value={form.taxId}
-              onChange={(e) => setForm({ ...form, taxId: e.target.value })}
-            />
+            <input className={inputClass} {...register("taxId")} />
           </div>
           <div>
             <label className={labelClass}>Dirección</label>
-            <input
-              className={inputClass}
-              value={form.address}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
-            />
+            <input className={inputClass} {...register("address")} />
           </div>
-          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
-          >
-            {submitting ? "Guardando..." : "Crear cliente"}
-          </button>
+          <Button type="submit" disabled={createClient.isPending} className="w-full px-3 py-2">
+            {createClient.isPending ? "Guardando..." : "Crear cliente"}
+          </Button>
         </form>
       </div>
 
       <div>
         <h1 className="mb-4 text-2xl font-semibold">Clientes</h1>
-        {!clients && <p className="text-sm text-gray-500 dark:text-gray-400">Cargando...</p>}
+        {isLoading && <p className="text-sm text-gray-500 dark:text-gray-400">Cargando...</p>}
         {clients && clients.length === 0 && (
           <p className="text-sm text-gray-500 dark:text-gray-400">Todavía no hay clientes cargados.</p>
         )}
