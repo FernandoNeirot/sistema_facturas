@@ -37,7 +37,25 @@
       "Bash(curl -s -X DELETE http://localhost:4000/api/invoices/cmueq4b4i000255n03a2c5uae -o /dev/null -w \"delete invoice INV-00004: %{http_code}\\\\n\")",
       "Bash(curl -s -X DELETE http://localhost:4000/api/invoices/cmueq3mnl000255qshzlg0hqd -o /dev/null -w \"delete invoice INV-00003: %{http_code}\\\\n\")",
       "Bash(curl -s -X DELETE http://localhost:4000/api/clients/cmueq49l4000055n05qx5vsm6 -o /dev/null -w \"delete client iqxekx: %{http_code}\\\\n\")",
-      "Bash(curl -s -X DELETE http://localhost:4000/api/clients/cmueq3l3t000055qsnlj2wvat -o /dev/null -w \"delete client wupfrj: %{http_code}\\\\n\")"
+      "Bash(curl -s -X DELETE http://localhost:4000/api/clients/cmueq3l3t000055qsnlj2wvat -o /dev/null -w \"delete client wupfrj: %{http_code}\\\\n\")",
+      "Bash(mkdir -p .claude/hooks)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\Fernando Neirot\\Documents\\repos\\patagonia\\claude\\.claude",
+      "C:\\Users\\FERNAN~1\\AppData\\Local\\Temp\\claude"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -EncodedCommand JABqAHMAbwBuACAAPQAgAFsAQwBvAG4AcwBvAGwAZQBdADoAOgBJAG4ALgBSAGUAYQBkAFQAbwBFAG4AZAAoACkAIAB8ACAAQwBvAG4AdgBlAHIAdABGAHIAbwBtAC0ASgBzAG8AbgA7ACAAJABzAGsAaQBsAGwAIAA9ACAAJABqAHMAbwBuAC4AdABvAG8AbABfAGkAbgBwAHUAdAAuAHMAawBpAGwAbAA7ACAAQQBkAGQALQBUAHkAcABlACAALQBBAHMAcwBlAG0AYgBsAHkATgBhAG0AZQAgAFMAeQBzAHQAZQBtAC4AVwBpAG4AZABvAHcAcwAuAEYAbwByAG0AcwA7ACAAWwBTAHkAcwB0AGUAbQAuAFcAaQBuAGQAbwB3AHMALgBGAG8AcgBtAHMALgBNAGUAcwBzAGEAZwBlAEIAbwB4AF0AOgA6AFMAaABvAHcAKAAiAFMAZQAgAHUAcwBvACAAZQBsACAAcwBrAGkAbABsADoAIAAiACAAKwAgACQAcwBrAGkAbABsACwAIAAiAEMAbABhAHUAZABlACAAQwBvAGQAZQAgAEgAbwBvAGsAIgApACAAfAAgAE8AdQB0AC0ATgB1AGwAbAA="
+          }
+        ]
+      }
     ]
   }
 }
