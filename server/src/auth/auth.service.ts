@@ -25,7 +25,8 @@ export class AuthService {
     // dummy, para no filtrar por timing si el username existe o no.
     const isPasswordValid = await bcrypt.compare(
       password,
-      user?.passwordHash ?? '$2b$10$invalidinvalidinvalidu.invalidinvalidinvalidinvalidin',
+      user?.passwordHash ??
+        '$2b$10$invalidinvalidinvalidu.invalidinvalidinvalidinvalidin',
     );
 
     if (!user || !isPasswordValid) {
