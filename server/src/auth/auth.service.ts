@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { PrismaService } from '../prisma/prisma.service';
 
 export interface JwtPayload {
   sub: string;
@@ -9,31 +10,31 @@ export interface JwtPayload {
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async login(
     username: string,
     password: string,
   ): Promise<{ token: string; username: string }> {
-    const expectedUsername = process.env.APP_USERNAME;
-    const passwordHash = process.env.APP_PASSWORD_HASH;
+    const user = await this.prisma.user.findUnique({ where: { username } });
 
-    if (!expectedUsername || !passwordHash) {
+    // Si el usuario no existe igual se corre bcrypt.compare contra un hash
+    // dummy, para no filtrar por timing si el username existe o no.
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      user?.passwordHash ?? '$2b$10$invalidinvalidinvalidu.invalidinvalidinvalidinvalidin',
+    );
+
+    if (!user || !isPasswordValid) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    // Se valida usuario y password, pero se devuelve siempre el mismo error
-    // genérico para no revelar cuál de los dos fue el que falló.
-    const isUsernameValid = username === expectedUsername;
-    const isPasswordValid = await bcrypt.compare(password, passwordHash);
-
-    if (!isUsernameValid || !isPasswordValid) {
-      throw new UnauthorizedException('Credenciales inválidas');
-    }
-
-    const payload: JwtPayload = { sub: 'single-user', username };
+    const payload: JwtPayload = { sub: user.id, username: user.username };
     const token = this.jwtService.sign(payload);
 
-    return { token, username };
+    return { token, username: user.username };
   }
 }
