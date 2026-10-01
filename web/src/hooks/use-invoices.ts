@@ -10,6 +10,8 @@ type CreateInvoicePayload = {
   items: { description: string; quantity: number; unitPrice: number }[];
 };
 
+type UpdateInvoicePayload = CreateInvoicePayload;
+
 export function useInvoicesQuery() {
   return useQuery({ queryKey: ["invoices"], queryFn: api.invoices.list });
 }
@@ -29,6 +31,22 @@ export function useCreateInvoiceMutation() {
   return useMutation({
     mutationFn: (data: CreateInvoicePayload) => api.invoices.create(data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+    },
+    onError: (error) => {
+      showError(error instanceof Error ? error.message : "Error desconocido");
+    },
+  });
+}
+
+export function useUpdateInvoiceMutation(id: string) {
+  const queryClient = useQueryClient();
+  const showError = useUIStore((state) => state.showError);
+
+  return useMutation({
+    mutationFn: (data: UpdateInvoicePayload) => api.invoices.update(id, data),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(["invoices", id], updated);
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
     },
     onError: (error) => {

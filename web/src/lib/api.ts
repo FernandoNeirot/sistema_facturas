@@ -52,6 +52,15 @@ export const api = {
     }) => request<Invoice>("/invoices", { method: "POST", body: JSON.stringify(data) }),
     updateStatus: (id: string, status: InvoiceStatus) =>
       request<Invoice>(`/invoices/${id}`, { method: "PUT", body: JSON.stringify({ status }) }),
+    update: (
+      id: string,
+      data: {
+        clientId: string;
+        dueDate: string;
+        notes?: string;
+        items: { description: string; quantity: number; unitPrice: number }[];
+      },
+    ) => request<Invoice>(`/invoices/${id}`, { method: "PUT", body: JSON.stringify(data) }),
     remove: (id: string) => request<void>(`/invoices/${id}`, { method: "DELETE" }),
     downloadPdf: async (id: string): Promise<Blob> => {
       const res = await fetch(`${API_URL}/invoices/${id}/pdf`, { credentials: "include", cache: "no-store" });

@@ -41,3 +41,8 @@ export const CreateInvoiceFormSchema = z.object({
 
 export type CreateInvoiceFormInput = z.input<typeof CreateInvoiceFormSchema>;
 export type CreateInvoiceFormOutput = z.output<typeof CreateInvoiceFormSchema>;
+
+export const UpdateInvoiceFormSchema = CreateInvoiceFormSchema;
+
+export type UpdateInvoiceFormInput = z.input<typeof UpdateInvoiceFormSchema>;
+export type UpdateInvoiceFormOutput = z.output<typeof UpdateInvoiceFormSchema>;

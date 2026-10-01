@@ -59,6 +59,9 @@ export default function InvoiceDetailPage() {
               </option>
             ))}
           </select>
+          <Button href={`/invoices/${invoice.id}/edit`} className="px-4 py-2">
+            Editar
+          </Button>
           <Button onClick={handleDownloadPdf} className="px-4 py-2">
             Descargar PDF
           </Button>

@@ -7,3 +7,6 @@ coverage
 
 *.db
 *.db-journal
+
+# Dump temporal usado para migrar datos de SQLite a Postgres
+prisma/data-export.json

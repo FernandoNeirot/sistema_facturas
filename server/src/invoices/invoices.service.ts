@@ -73,6 +73,13 @@ export class InvoicesService {
   async update(id: string, dto: UpdateInvoiceDto) {
     await this.findOne(id);
 
+    if (dto.clientId) {
+      const client = await this.prisma.client.findUnique({
+        where: { id: dto.clientId },
+      });
+      if (!client) throw new BadRequestException('Unknown clientId');
+    }
+
     const invoice = await this.prisma.$transaction(async (tx) => {
       if (dto.items) {
         await tx.invoiceItem.deleteMany({ where: { invoiceId: id } });
@@ -80,6 +87,7 @@ export class InvoicesService {
       return tx.invoice.update({
         where: { id },
         data: {
+          clientId: dto.clientId,
           dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
           notes: dto.notes,
           status: dto.status,

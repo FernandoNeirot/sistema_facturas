@@ -21,6 +21,10 @@ export enum InvoiceStatusDto {
 
 export class UpdateInvoiceDto {
   @IsOptional()
+  @IsString()
+  clientId?: string;
+
+  @IsOptional()
   @IsISO8601()
   dueDate?: string;
 
