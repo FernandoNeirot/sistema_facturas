@@ -20,6 +20,17 @@ export default function InvoiceDetailPage() {
     updateStatus.mutate(status);
   }
 
+  async function handleDownloadPdf() {
+    if (!invoice) return;
+    const blob = await api.invoices.downloadPdf(invoice.id);
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${invoice.number}.pdf`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   if (isError) {
     return (
       <p className="text-sm text-red-600 dark:text-red-400">
@@ -48,7 +59,7 @@ export default function InvoiceDetailPage() {
               </option>
             ))}
           </select>
-          <Button href={api.invoices.pdfUrl(invoice.id)} className="px-4 py-2">
+          <Button onClick={handleDownloadPdf} className="px-4 py-2">
             Descargar PDF
           </Button>
         </div>

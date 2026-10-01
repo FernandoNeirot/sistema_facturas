@@ -5,7 +5,7 @@ Monorepo con dos proyectos independientes (sin tooling de monorepo compartido, c
 - `server/` — API REST en **NestJS** + TypeScript + Prisma + SQLite.
 - `web/` — Frontend en **Next.js** (App Router) + Tailwind CSS v4.
 
-No hay autenticación ni multi-usuario: es una app de un solo usuario, pensada para uso local/personal, no para producción multi-tenant.
+Es una app de un solo usuario (sin tabla de usuarios ni multi-tenant), pensada para uso local/personal. Tiene un login mínimo: una única password compartida (hasheada en `server/.env` como `APP_PASSWORD_HASH`) que emite un JWT (`JWT_SECRET` en `server/.env`) protegiendo el resto de la API — ver detalle en la sección de Backend.
 
 ## Cómo correr el proyecto
 
@@ -34,9 +34,12 @@ El frontend lee la URL de la API de `web/.env.local` (`NEXT_PUBLIC_API_URL`, def
   - `src/clients/` — controller, service, DTOs (`class-validator`).
   - `src/invoices/` — controller, service, DTOs; incluye el endpoint de descarga de PDF (`GET /invoices/:id/pdf`).
   - `src/pdf/generate-invoice-pdf.ts` — función pura con `pdfkit`, no es un provider de Nest.
-  - `src/health.controller.ts` — `GET /health`.
+  - `src/health.controller.ts` — `GET /health` (marcado `@Public()`, sin auth).
+  - `src/auth/` — `AuthModule`: `POST /auth/login` (`@Public()`, recibe `{ password }`, la compara con `bcrypt` contra `APP_PASSWORD_HASH` y devuelve `{ accessToken }` firmado con `JWT_SECRET`); `JwtAuthGuard` global (registrado como `APP_GUARD` en `app.module.ts`) que exige `Authorization: Bearer <token>` en todo el resto de rutas salvo las marcadas con el decorator `@Public()`. Generar el hash de una password nueva con `npm run hash-password -- "tuPassword"` (script en `server/scripts/hash-password.ts`) y pegarlo en `.env`.
 - **Arquitectura**: capas simples `Controller → Service → PrismaService`, sin Repository Pattern ni capa de dominio separada. Los services llaman a Prisma directamente; los controllers devuelven el resultado de Prisma tal cual (sin DTO de serialización de salida todavía).
-- Validación de entrada con `class-validator`/`class-transformer` vía `ValidationPipe` global (`whitelist: true, transform: true`).
+- Validación de entrada con `class-validator`/`class-transformer` vía `ValidationPipe` global (`whitelist: true, transform: true, forbidNonWhitelisted: true`).
+- Seguridad adicional: `@nestjs/throttler` global (rate limiting), `helmet`, CORS restringido a `FRONTEND_URL` (`.env`, default `http://localhost:3000`).
+- `@nestjs/jwt` está fijado en `11.0.2` exacto (no `^12.x`) por el mismo motivo que `@nestjs/mapped-types` (ESM-only, rompe Jest bajo CommonJS).
 - `@nestjs/mapped-types` está fijado en `2.1.1` (no la `12.x`) porque esa versión es ESM-only y rompe Jest bajo la config CommonJS del proyecto — no actualizar sin resolver eso primero.
 - Modelo de datos: `Client` 1—N `Invoice` 1—N `InvoiceItem` (ver `prisma/schema.prisma`). El `total` de una factura se calcula en runtime a partir de sus ítems, no se persiste. La numeración de factura (`INV-00001`, ...) se genera contando registros existentes.
 - Tests: solo hay un e2e (`test/app.e2e-spec.ts`) que pega a `/health`. No hay unit tests de services todavía.
@@ -47,7 +50,8 @@ El frontend lee la URL de la API de `web/.env.local` (`NEXT_PUBLIC_API_URL`, def
   - **React Query** (`@tanstack/react-query`) para data fetching/cache/invalidación — capa de hooks en `src/hooks/` (`use-clients.ts`, `use-invoices.ts`), que llaman a `src/lib/api.ts` (fetch manual, sin cambios) como `queryFn`/`mutationFn`. `src/lib/query-client.ts` + `src/components/query-provider.tsx` proveen el `QueryClient` (montado en `layout.tsx`).
   - **Zod** para esquemas/validación (`src/schemas/client.schema.ts`, `src/schemas/invoice.schema.ts`) — los tipos (`Client`, `Invoice`, `InvoiceStatus`, etc.) se infieren de estos esquemas (`z.infer`) en vez de declararse a mano; `lib/api.ts` los reexporta.
   - **React Hook Form + Zod** (`@hookform/resolvers/zod`) en los formularios de `/clients` y `/invoices/new`. El de nueva factura usa `useFieldArray` para los ítems dinámicos y tipa `useForm` con `z.input`/`z.output` del schema porque `quantity`/`unitPrice` usan `z.coerce.number()`.
-  - **Zustand** (`src/store/ui-store.ts`) solo para el toast global de errores/éxitos de mutations (`src/components/toast.tsx`, montado en `layout.tsx`) — los errores de validación de campo siguen mostrándose inline vía `formState.errors` (`src/components/ui/error-text.tsx`), el store no los reemplaza.
+  - **Zustand** (`src/store/ui-store.ts`) solo para el toast global de errores/éxitos de mutations (`src/components/toast.tsx`, montado en `layout.tsx`) — los errores de validación de campo siguen mostrándose inline vía `formState.errors` (`src/components/ui/error-text.tsx`), el store no los reemplaza. También hay un segundo store, `src/store/auth-store.ts`, con el JWT persistido en `localStorage` (`zustand/middleware persist`).
+  - **Auth**: `src/components/auth-gate.tsx` envuelve header+contenido en `layout.tsx` y muestra `src/components/login-screen.tsx` si no hay token; `src/hooks/use-auth.ts` (`useLoginMutation`) llama a `api.auth.login`. `src/lib/api.ts` adjunta `Authorization: Bearer <token>` en cada request (leyendo el store fuera de React con `useAuthStore.getState()`) y hace logout automático ante un 401. La descarga de PDF (`api.invoices.downloadPdf`) va por `fetch` + Blob en vez de un link directo, porque el endpoint ahora requiere el header de auth.
   - Componentes chicos reutilizables en `src/components/ui/` (`button.tsx`, `card.tsx`, `status-badge.tsx`, `error-text.tsx`) además de `theme-provider.tsx`/`theme-toggle.tsx`.
   - Formatters de fecha/moneda centralizados en `src/lib/format.ts` (antes duplicados en cada página).
 - Rutas: `/` (listado de facturas), `/clients` (alta + listado), `/invoices/new` (alta de factura con ítems dinámicos), `/invoices/[id]` (detalle, cambio de estado, descarga de PDF).

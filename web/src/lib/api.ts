@@ -1,5 +1,6 @@
 import type { Client } from "@/schemas/client.schema";
 import type { Invoice, InvoiceStatus } from "@/schemas/invoice.schema";
+import { useAuthStore } from "@/store/auth-store";
 
 export type { Client, Invoice, InvoiceStatus };
 
@@ -9,17 +10,30 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: { "Content-Type": "application/json", ...options?.headers },
+    credentials: "include",
     cache: "no-store",
   });
+  if (res.status === 401) {
+    useAuthStore.getState().setUnauthenticated();
+  }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? `Request failed with status ${res.status}`);
+    throw new Error(body.message ?? body.error ?? `Request failed with status ${res.status}`);
   }
   if (res.status === 204) return undefined as T;
   return res.json();
 }
 
 export const api = {
+  auth: {
+    login: (username: string, password: string) =>
+      request<{ username: string }>("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ username, password }),
+      }),
+    me: () => request<{ username: string }>("/auth/me"),
+    logout: () => request<{ ok: boolean }>("/auth/logout", { method: "POST" }),
+  },
   clients: {
     list: () => request<Client[]>("/clients"),
     get: (id: string) => request<Client>(`/clients/${id}`),
@@ -39,6 +53,13 @@ export const api = {
     updateStatus: (id: string, status: InvoiceStatus) =>
       request<Invoice>(`/invoices/${id}`, { method: "PUT", body: JSON.stringify({ status }) }),
     remove: (id: string) => request<void>(`/invoices/${id}`, { method: "DELETE" }),
-    pdfUrl: (id: string) => `${API_URL}/invoices/${id}/pdf`,
+    downloadPdf: async (id: string): Promise<Blob> => {
+      const res = await fetch(`${API_URL}/invoices/${id}/pdf`, { credentials: "include", cache: "no-store" });
+      if (res.status === 401) {
+        useAuthStore.getState().setUnauthenticated();
+      }
+      if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
+      return res.blob();
+    },
   },
 };
